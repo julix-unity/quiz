@@ -4,6 +4,7 @@ import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { loggerLink, unstable_httpBatchStreamLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
+import { devtoolsLink } from "trpc-client-devtools-link";
 import { useState } from "react";
 import SuperJSON from "superjson";
 
@@ -42,6 +43,10 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
   const [trpcClient] = useState(() =>
     api.createClient({
       links: [
+        devtoolsLink({
+          // enabled by default, configured to only run on dev
+          enabled: process.env.NODE_ENV === 'development'
+        }),
         loggerLink({
           enabled: (op) =>
             process.env.NODE_ENV === "development" ||

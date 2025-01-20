@@ -2,21 +2,21 @@
 
 import { useState } from "react";
 import { api } from "~/trpc/react"; // Use the `api` utility for tRPC
-import type { ChatGPTResponse } from "~/server/api/routers/chatgpt";
+import type { Questions } from "~/server/api/routers/chatgpt";
 import { Question } from "./_components/Question";
 
 
 const ChatGPTTest = () => {
-  const [result, setResult] = useState<ChatGPTResponse | null>(null);
+  const [results, setResults] = useState<Questions | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [input, setInput] = useState({ topic: "", difficulty: "" });
+  const [input, setInput] = useState({ topic: "", difficulty: "", number: 1 });
 
   // const utils = api.useContext(); // Access tRPC utility for invalidation or other operations
 
-  const generateQuestion = api.chatgpt.generateQuestion.useMutation({
+  const generateQuestions = api.chatgpt.generateQuestions.useMutation({
     onSuccess: (data) => {
       console.log("Success:", data);
-      setResult(data); // Store formatted result
+      setResults(data); // Store formatted result
     },
     onError: (error) => {
       console.error("Error:", error);
@@ -26,11 +26,11 @@ const ChatGPTTest = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.topic || !input.difficulty) {
+    if (!input.topic || !input.difficulty || !input.number) {
       setError("Please provide both a topic and difficulty.");
       return;
     }
-    generateQuestion.mutate(input);
+    generateQuestions.mutate(input);
   };
 
   return (
@@ -55,12 +55,21 @@ const ChatGPTTest = () => {
           }
           className="w-full rounded-md px-4 py-2 text-black"
         />
+        <label>Number of Questions:</label>
+        <input
+          type="number"
+          value={input.number}
+          onChange={(e) =>
+            setInput({ ...input, number: Number(e.target.value) })
+          }
+          className="w-full rounded-md px-4 py-2 text-black"
+        />
         <button
           type="submit"
           className="rounded-md bg-blue-500 px-4 py-2 text-white font-semibold hover:bg-blue-600"
-          disabled={generateQuestion.isLoading}
+          disabled={generateQuestions.isLoading}
         >
-          {generateQuestion.isLoading ? "Generating..." : "Generate Question"}
+          {generateQuestions.isLoading ? "Generating..." : "Generate Question"}
         </button>
       </form>
       <br />
@@ -71,11 +80,13 @@ const ChatGPTTest = () => {
           <pre className="whitespace-pre-wrap">{error}</pre>
         </div>
       )}
-      {result && (
-        <div className="mt-4 p-4 bg-blue-600 rounded-md">
-          <Question question={result.question} answers={result.answers} />
-        </div>
-      )}
+      {results?.map(question => {
+        return (
+          <div key={question.question.text} className="mt-4 p-4 bg-blue-600 rounded-md">
+            <Question question={question.question} answers={question.answers} />
+          </div>
+        )
+      })}
     </div>
   );
 };

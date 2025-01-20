@@ -1,9 +1,9 @@
 "use client";
 
-import type { ChatGPTResponse } from "~/server/api/routers/chatgpt";
+import type { Question } from "~/server/api/routers/chatgpt";
 import { useState } from "react";
 
-export function Question({question, answers}: ChatGPTResponse) {
+export function Question({question, answers}: Question) {
 
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState<boolean>(false);
@@ -16,17 +16,17 @@ export function Question({question, answers}: ChatGPTResponse) {
   return (
     <div className="w-full max-w-xs">
       <fieldset>
-        <legend>{question}</legend>
+        <legend>{question.text}</legend>
         <br />
         {answers?.map(answer => {
-          const {text } = answer;
+          const {text} = answer;
           const isSelected = selectedAnswer === text;
           return (
             <div key={answer.text} className="flex items-center space-x-2">
               <input
                 type="radio"
                 id={text}
-                name="quiz-option"
+                name={question.text}
                 value={text}
                 checked={isSelected}
                 onChange={() => handleAnswerClick(text)}

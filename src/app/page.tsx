@@ -1,9 +1,7 @@
 import Link from "next/link";
-import Head from "next/head";
-// import { LatestPost } from "~/app/_components/post";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
-import ChatGPTTest from "./ChatGPTTest";
+import QuizForm from "./QuizForm";
 
 export default async function Home() {
   const session = await auth();
@@ -16,9 +14,6 @@ export default async function Home() {
     <HydrateClient>
       <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-quiz-blue to-quiz-dark text-white">
         <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-          <h1 className="text-2xl font-extrabold tracking-tight sm:text-[2rem]">
-            Create <span className="text-quiz-gold">your</span> gentle quiz
-          </h1>
           <div className="flex flex-col items-center gap-2">
             <div className="flex flex-col items-center justify-center gap-4">
               <p className="text-center text-xl text-white">
@@ -32,9 +27,9 @@ export default async function Home() {
               </Link>
             </div>
           </div>
-
-          {session?.user && <ChatGPTTest />}
         </div>
+
+        {session?.user && <QuizForm />}
       </main>
     </HydrateClient>
   );

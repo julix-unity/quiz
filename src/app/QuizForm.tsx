@@ -6,7 +6,7 @@ import type { Questions } from "~/server/api/routers/chatgpt";
 import { Question } from "./_components/Question";
 
 
-const ChatGPTTest = () => {
+const QuizForm = () => {
   const [results, setResults] = useState<Questions | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [input, setInput] = useState({ topic: "", difficulty: "", number: 1 });
@@ -91,4 +91,4 @@ const ChatGPTTest = () => {
   );
 };
 
-export default ChatGPTTest;
+export default QuizForm;

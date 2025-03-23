@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
+import { motion } from "framer-motion";
 import { api } from "~/trpc/react"; // Use the `api` utility for tRPC
 import type { Questions } from "~/server/api/routers/chatgpt";
 import { Question } from "./_components/Question";
@@ -50,8 +51,18 @@ const QuizForm = () => {
 
   const isSubmitted = generateQuestions.isPending || !!results;
 
-  return (
-    <>
+  return (<>
+    <motion.div
+      initial={{ x: "50%", width: "50%", borderRadius: 12 }}
+      animate={{
+        x: isSubmitted ? "calc(-50vw + 200px)" : "0", // Moves left
+        width: isSubmitted ? "400px" : "400px", // Shrinks width
+        height: isSubmitted ? "100vh" : "auto", // Expands to full height
+        borderRadius: isSubmitted ? 0 : 12, // Removes rounded edges
+      }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
+      className="absolute p-6 bg-gray-800"
+    >
       <Card>
         <h1 className="mb-4 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Create <span className="text-quiz-gold">your</span> gentle quiz</h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -108,15 +119,16 @@ const QuizForm = () => {
           </div>
         )}
       </Card>
+    </motion.div>
+    {results?.map(question => {
+      return (
+        <Card key={question.question.text}>
+          <Question question={question.question} answers={question.answers} />
+        </Card>
+      )
+    })}
+  </>
 
-      {results?.map(question => {
-        return (
-          <Card key={question.question.text}>
-            <Question question={question.question} answers={question.answers} />
-          </Card>
-        )
-      })}
-    </>
   );
 };
 

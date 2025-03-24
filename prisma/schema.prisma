@@ -63,6 +63,11 @@ model User {
     accounts      Account[]
     sessions      Session[]
     posts         Post[]
+
+    tokenCap        Int      @default(5000)
+    tokensUsed      Int      @default(0)
+    quizzesCreated  Int      @default(0)
+
 }
 
 model VerificationToken {

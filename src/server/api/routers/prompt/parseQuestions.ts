@@ -1,8 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { quizSchema, type Questions } from "./prompt.types";
 
-const extractJSONArray = (rawResponse: string): string => {
-  const jsonMatch = rawResponse.match(/\[.*?\]/sg); // non-greedy match
+const extractOuterMostJSONArray = (rawResponse: string): string => {
+  const jsonMatch = rawResponse.match(/\[.*\]/sg);
   if (jsonMatch) return jsonMatch[0];
 
   throw new TRPCError({
@@ -21,7 +21,6 @@ const parseJSON = (jsonString: string): unknown => {
       message: "Parsed JSON is not an array.",
     });
   }
-
   return parsed;
 };
 
@@ -59,7 +58,7 @@ const addDefaultCorrectAnswer = (questions: Questions): Questions => {
 
 export const parseQuestions = (result: string): Questions => {
   try {
-    const jsonString = extractJSONArray(result);
+    const jsonString = extractOuterMostJSONArray(result);
     const json = parseJSON(jsonString);
     const questions = validateQuestions(json);
     const questionsWithDefaults = addDefaultCorrectAnswer(questions);
@@ -73,6 +72,7 @@ export const parseQuestions = (result: string): Questions => {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: "Unexpected error during question parsing and validation.",
+      cause: error
     });
   }
 };

@@ -6,6 +6,8 @@ import { z } from "zod";
 import { askChatGPT, parseQuestions } from "./prompt";
 import { rethrowAsTRPCError } from "~/server/utils";
 
+// re-export types for simpler import on frontend
+export * from "./prompt/prompt.types";
 
 export const chatgptRouter = createTRPCRouter({
   generateQuestions: protectedProcedure
@@ -13,8 +15,9 @@ export const chatgptRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       console.log("Received input:", input);
 
+      const isFancy = true;
       try {
-        const result = await askChatGPT(input, true); // set to false for non-fancy
+        const result = await askChatGPT(input, isFancy);
         const questions = parseQuestions(result);
         return questions;
       } catch (error) {

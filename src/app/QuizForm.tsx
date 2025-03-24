@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { api } from "~/trpc/react"; // Use the `api` utility for tRPC
 import type { Questions } from "~/server/api/routers/chatgpt";
 import { Question } from "./_components/Question";
-import { useTokens } from "./TokenProvider";
+import { useTokenStats } from "./_hooks/useTokenStats";
 
 const Card = ({ children }: { children: ReactNode }) => <div className="max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">{children}</div>
 
@@ -15,12 +15,16 @@ const QuizForm = () => {
   const [input, setInput] = useState({ topic: "", difficulty: "", number: 1 });
   const [onCoolDown, setOnCoolDown] = useState(false);
 
-  const { tokens, decrementTokens }  = useTokens();
+  const { tokensUsed, tokenCap, isLoading: isLoadingTokens }  = useTokenStats();
 
   // const utils = api.useContext(); // Access tRPC utility for invalidation or other operations
 
   const generateQuestions = api.chatgpt.generateQuestions.useMutation({
     onSuccess: (data) => {
+      if(!data) {
+        console.error("Error: Failed successfully");
+        return;
+      }
       console.log("Success:", data);
       setError(null);
       setOnCoolDown(true);
@@ -113,7 +117,7 @@ const QuizForm = () => {
             </> : (onCoolDown ? "Enjoy!" : "Generate Question")}
           </button>
           <hr />
-          <p>Tokens left: {tokens}</p>
+          <p>{isLoadingTokens ? "Loading tokens..." : `${tokensUsed} tokens used out of ${tokenCap}`}</p>
         </form>
         <br />
 

@@ -1,0 +1,1 @@
+export { rethrowAsTRPCError } from "./rethrowAsTRPCError";

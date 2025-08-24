@@ -14,12 +14,22 @@ if (!apiKey) {
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 const openai = new OpenAI({ apiKey });
 
-const promptGPT = async (params: ChatCompletionCreateParamsNonStreaming, thing = "thing being generated"): Promise<string> => {
+type Usage = { prompt: number; completion: number; total: number };
+export type GPTResult = { text: string; usage: Usage | undefined };
+
+const promptGPT = async (params: ChatCompletionCreateParamsNonStreaming, thing = "thing being generated"): Promise<GPTResult> => {
   try {
     const completion = await openai.chat.completions.create(params);
-    const result = completion.choices[0]?.message?.content ?? 'No response';
-    console.log("OpenAI API response: \n", result);
-    return result;
+    const text = completion.choices[0]?.message?.content ?? 'No response';
+    console.log("OpenAI API response: \n", text);
+    const usage: Usage | undefined = completion.usage
+      ? {
+          prompt: completion.usage.prompt_tokens ?? 0,
+          completion: completion.usage.completion_tokens ?? 0,
+          total: completion.usage.total_tokens ?? 0,
+        }
+      : undefined;
+    return { text, usage };
   } catch (error) {
     console.error('Error calling OpenAI:', error);
     throw new TRPCError({
@@ -29,7 +39,7 @@ const promptGPT = async (params: ChatCompletionCreateParamsNonStreaming, thing =
   }
 };
 
-export const askChatGPT = async (input: PromptType, isFancy = false): Promise<string> => {
+export const askChatGPT = async (input: PromptType, isFancy = false): Promise<GPTResult> => {
   const params: ChatCompletionCreateParamsNonStreaming = isFancy ? fancyParams(input) : cheapParams(input);
   return promptGPT(params, "quiz question");
 }

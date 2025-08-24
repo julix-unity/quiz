@@ -12,12 +12,10 @@ const Card = ({ children }: { children: ReactNode }) => <div className="max-w-sm
 const QuizForm = () => {
   const [results, setResults] = useState<Questions | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [input, setInput] = useState({ topic: "", difficulty: "", number: 1 });
+  const [input, setInput] = useState({ topic: "", difficulty: "", number: 1, quality: "fancy" as "cheap" | "fancy" });
   const [onCoolDown, setOnCoolDown] = useState(false);
 
   const { tokensUsed, tokenCap, isLoading: isLoadingTokens }  = useTokenStats();
-
-  // const utils = api.useContext(); // Access tRPC utility for invalidation or other operations
 
   const generateQuestions = api.chatgpt.generateQuestions.useMutation({
     onSuccess: (data) => {
@@ -52,7 +50,6 @@ const QuizForm = () => {
     generateQuestions.mutate(input);
   };
 
-
   const isSending = generateQuestions.isPending;
   const isReady = !isSending && !onCoolDown;
 
@@ -78,6 +75,7 @@ const QuizForm = () => {
             type="text"
             placeholder="As specific or broad as you like"
             value={input.topic}
+            maxLength={120}
             onChange={(e) => setInput({ ...input, topic: e.target.value })}
             className="w-full rounded-md px-4 py-2 text-black"
           />
@@ -86,6 +84,7 @@ const QuizForm = () => {
             type="text"
             placeholder="2/7, Hell Freezing Over, Easy?"
             value={input.difficulty}
+            maxLength={60}
             onChange={(e) =>
               setInput({ ...input, difficulty: e.target.value })
             }
@@ -101,6 +100,15 @@ const QuizForm = () => {
             }
             className="w-full rounded-md px-4 py-2 text-black"
           />
+          <label>Quality:</label>
+          <select
+            value={input.quality}
+            onChange={(e) => setInput({ ...input, quality: e.target.value as "cheap" | "fancy" })}
+            className="w-full rounded-md px-4 py-2 text-black"
+          >
+            <option value="fancy">Higher quality (structured, costlier)</option>
+            <option value="cheap">Cheaper (looser format)</option>
+          </select>
           <button
             type="submit"
             className={`rounded-md px-4 py-2 text-white font-semibold ${isReady && 'bg-quiz-green hover:bg-quiz-gold'} ${isSending && 'cursor-progress bg-quiz-dark'} ${onCoolDown && 'bg-quiz-green'}`}
@@ -129,10 +137,10 @@ const QuizForm = () => {
         )}
       </Card>
     </motion.div>
-    {results?.map(question => {
+    {results?.map((q, idx) => {
       return (
-        <Card key={question.question.text}>
-          <Question question={question.question} answers={question.answers} />
+        <Card key={`${q.question.text}-${idx}`}>
+          <Question question={q.question} answers={q.answers} />
         </Card>
       )
     })}

@@ -1,7 +1,7 @@
 import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/index.mjs";
 import type { PromptType } from "./prompt.types";
 
-const cheapModel = 'gpt-3.5-turbo-0125';
+const cheapModel = 'gpt-4o-mini-2024-07-18';
 
 const CheapQuestionSchema = {
   question: {
@@ -17,7 +17,7 @@ const CheapQuestionSchema = {
 };
 
 const generatePrompt = ({ topic, difficulty, number }: PromptType) => (`
- You're generating domain specific questions for a self-testing and learning quiz app.
+You're generating domain specific questions for a self-testing and learning quiz app.
 This Quiz should be on topic ${topic} and with a difficulty of ${difficulty}.
 
 Please return a JSON object with "quiz" as key, containing an array of ${number} Objects matching ${JSON.stringify(CheapQuestionSchema).replace(/false/g, 'boolean')}

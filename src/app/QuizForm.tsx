@@ -58,7 +58,7 @@ const QuizForm = ({ session }: { session: Session }) => {
   const isSubmitted = generateQuestions.isPending || !!results;
 
   return (<>
-    <motion.div
+    <motion.aside
       initial={{top: "2rem", borderRadius: 12, position: "fixed", width: "400px" }}
       animate={{
         x: isSubmitted ? "calc(-50vw + 200px)" : "0", // Moves left
@@ -67,7 +67,7 @@ const QuizForm = ({ session }: { session: Session }) => {
         borderRadius: isSubmitted ? 0 : 12, // Removes rounded edges
       }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
-      className="absolute p-6 bg-gray-800"
+      className="absolute p-6 bg-gray-800 print:hidden"
     >
       <Card>
         <h1 className="mb-4 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Create <span className="text-quiz-gold">your</span> gentle quiz</h1>
@@ -153,7 +153,7 @@ const QuizForm = ({ session }: { session: Session }) => {
           </div>
         </div>
       </Card>
-    </motion.div>
+    </motion.aside>
     <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
       {results?.map((q, idx) => {
         return (

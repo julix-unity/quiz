@@ -7,6 +7,7 @@ import { askChatGPT, parseQuestions } from "./prompt";
 import type { GPTResult } from "./prompt/prompt";
 import { rethrowAsTRPCError } from "~/server/utils";
 import { TRPCError } from "@trpc/server";
+import { env } from "~/env";
 
 // re-export types for simpler import on frontend
 export * from "./prompt/prompt.types";
@@ -29,6 +30,19 @@ const checkRateLimit = (userId: string) => {
   rlHits.set(userId, { ...current, count: current.count + 1 });
 };
 
+const parseAdminLists = () => {
+  const ids = (env.ADMIN_USER_IDS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  const emails = (env.ADMIN_EMAILS ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  return { ids, emails };
+};
+
+const isAdmin = (userId: string, email: string | null | undefined) => {
+  const { ids, emails } = parseAdminLists();
+  if (ids.includes(userId)) return true;
+  if (email && emails.includes(email.toLowerCase())) return true;
+  return false;
+};
+
 export const chatgptRouter = createTRPCRouter({
   generateQuestions: protectedProcedure
     .input(
@@ -41,19 +55,24 @@ export const chatgptRouter = createTRPCRouter({
     )
     .mutation(async ({ input, ctx }) => {
       const userId = ctx.session.user.id;
+      const userEmail = ctx.session.user.email ?? null;
       const { topic, difficulty, number, quality } = input;
 
-      // Rate limit
-      checkRateLimit(userId);
+      const admin = isAdmin(userId, userEmail);
 
-      // Quota check
-      const user = await ctx.db.user.findUnique({
-        where: { id: userId },
-        select: { tokensUsed: true, tokenCap: true },
-      });
-      if (!user) throw new TRPCError({ code: "UNAUTHORIZED" });
-      if (user.tokensUsed >= user.tokenCap) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Token cap reached. Try again later." });
+      // Rate limit (skip for admins)
+      if (!admin) checkRateLimit(userId);
+
+      // Quota check (skip for admins)
+      if (!admin) {
+        const user = await ctx.db.user.findUnique({
+          where: { id: userId },
+          select: { tokensUsed: true, tokenCap: true },
+        });
+        if (!user) throw new TRPCError({ code: "UNAUTHORIZED" });
+        if (user.tokensUsed >= user.tokenCap) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Token cap reached. Try again later." });
+        }
       }
 
       const isFancy = quality === "fancy";
@@ -64,21 +83,23 @@ export const chatgptRouter = createTRPCRouter({
         const usage = result.usage;
         const questions = parseQuestions(text);
 
-        // Persist token usage (best-effort)
-        const totalTokens = usage?.total ?? 0;
-        if (totalTokens > 0) {
-          await ctx.db.user.update({
-            where: { id: userId },
-            data: {
-              tokensUsed: { increment: totalTokens },
-              quizzesCreated: { increment: 1 },
-            },
-          });
-        } else {
-          await ctx.db.user.update({
-            where: { id: userId },
-            data: { quizzesCreated: { increment: 1 } },
-          });
+        // Persist token usage (skip increment for admins)
+        if (!admin) {
+          const totalTokens = usage?.total ?? 0;
+          if (totalTokens > 0) {
+            await ctx.db.user.update({
+              where: { id: userId },
+              data: {
+                tokensUsed: { increment: totalTokens },
+                quizzesCreated: { increment: 1 },
+              },
+            });
+          } else {
+            await ctx.db.user.update({
+              where: { id: userId },
+              data: { quizzesCreated: { increment: 1 } },
+            });
+          }
         }
 
         return questions;

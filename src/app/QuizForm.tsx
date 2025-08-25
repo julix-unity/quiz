@@ -6,10 +6,12 @@ import { api } from "~/trpc/react"; // Use the `api` utility for tRPC
 import type { Questions } from "~/server/api/routers/chatgpt";
 import { Question } from "./_components/Question";
 import { useTokenStats } from "./_hooks/useTokenStats";
+import { type Session } from "next-auth";
+import Link from "next/link";
 
 const Card = ({ children }: { children: ReactNode }) => <div className="max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">{children}</div>
 
-const QuizForm = () => {
+const QuizForm = ({ session }: { session: Session }) => {
   const [results, setResults] = useState<Questions | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [input, setInput] = useState({ topic: "", difficulty: "", number: 1, quality: "fancy" as "cheap" | "fancy" });
@@ -57,11 +59,11 @@ const QuizForm = () => {
 
   return (<>
     <motion.div
-      initial={{ x: "50%", width: "50%", borderRadius: 12 }}
+      initial={{top: "2rem", borderRadius: 12, position: "fixed", width: "400px" }}
       animate={{
         x: isSubmitted ? "calc(-50vw + 200px)" : "0", // Moves left
-        width: isSubmitted ? "400px" : "400px", // Shrinks width
         height: isSubmitted ? "100vh" : "auto", // Expands to full height
+        top: isSubmitted ? "0" : "2rem", // Moves to top
         borderRadius: isSubmitted ? 0 : 12, // Removes rounded edges
       }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
@@ -135,15 +137,32 @@ const QuizForm = () => {
             <pre className="whitespace-pre-wrap">{error}</pre>
           </div>
         )}
+        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center justify-center gap-4">
+              <p className="text-center text-xl text-white">
+                {session && <span>Logged in as {session.user?.name}</span>}
+              </p>
+              <Link
+                href={session ? "/api/auth/signout" : "/api/auth/signin"}
+                className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
+              >
+                {session ? "Sign out" : "Sign in"}
+              </Link>
+            </div>
+          </div>
+        </div>
       </Card>
     </motion.div>
-    {results?.map((q, idx) => {
-      return (
-        <Card key={`${q.question.text}-${idx}`}>
-          <Question question={q.question} answers={q.answers} />
-        </Card>
-      )
-    })}
+    <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
+      {results?.map((q, idx) => {
+        return (
+          <Card key={`${q.question.text}-${idx}`}>
+            <Question question={q.question} answers={q.answers} />
+          </Card>
+        )
+      })}
+    </div>
   </>
 
   );
